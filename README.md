@@ -4,7 +4,7 @@ Install requirements:
 `$pip install -r requirements.txt`
 
 You need to change in `config.py`:
--  `SECRET_KEY="\2\1thisismyscretkey\1\2\e\y\y\h"`
+-  `SECRET_KEY`
 -  `SQLALCHEMY_DATABASE_URI` 
 
 Create DB: 

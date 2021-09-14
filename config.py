@@ -1,8 +1,12 @@
 import os
+from environs import Env
+
 
 basedir = os.path.abspath(os.path.dirname(__file__))
+env = Env()
+env.read_env()
 
-SECRET_KEY = "\2\1thisismyscretkey\1\2\e\y\y\h"
+SECRET_KEY = env.str("SECRET_KEY", "TestingKey")
 WEB_TOKEN_PERIOD_EXPIRE_SECONDS=86400
 
 SQLALCHEMY_DATABASE_URI = "sqlite:///" + os.path.join(basedir, "test.db")
