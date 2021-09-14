@@ -25,7 +25,7 @@ def token_required(f):
         try:
             data = jwt.decode(token, app.config["SECRET_KEY"], algorithms=["HS256"])
             current_user = User.query.filter_by(username=data.get("username")).first()
-        except:
+        except jwt.exceptions.InvalidTokenError:
             return jsonify({"message": "Token is invalid"})
         return f(current_user, *args, **kwargs)
 
@@ -110,7 +110,7 @@ def get_item(user, move_token):
         move_token_data = jwt.decode(
             move_token, app.config["SECRET_KEY"], algorithms=["HS256"]
         )
-    except:
+    except jwt.exceptions.InvalidTokenError:
         return make_response(jsonify({"message": "Token is invalid"}), 200)
     item_id, new_username = move_token_data.get("item_id"), move_token_data.get(
         "new_username"
@@ -162,8 +162,9 @@ def login_user():
     if user.verify_password(password):
         web_token = jwt.encode(
             {
-                "exp": datetime.utcnow()
-                + timedelta(seconds=app.config["WEB_TOKEN_PERIOD_EXPIRE_SECONDS"]),
+                "exp": datetime.utcnow() + timedelta(
+                    seconds=app.config["WEB_TOKEN_PERIOD_EXPIRE_SECONDS"]
+                ),
                 "username": user.username,
             },
             app.config["SECRET_KEY"],
