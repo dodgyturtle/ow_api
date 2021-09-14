@@ -26,7 +26,7 @@ def token_required(f):
             data = jwt.decode(token, app.config["SECRET_KEY"], algorithms=["HS256"])
             current_user = User.query.filter_by(username=data.get("username")).first()
         except:
-            return jsonify({"message": "token is invalid"})
+            return jsonify({"message": "Token is invalid"})
         return f(current_user, *args, **kwargs)
 
     return decorator
@@ -98,12 +98,8 @@ def send_item(user):
         },
         app.config["SECRET_KEY"],
     )
-    return make_response(
-        jsonify(
-            {"move_url": url_for("get_item", move_token=move_token, _external=True)},
-            200,
-        )
-    )
+    move_url = url_for("get_item", move_token=move_token, _external=True)
+    return make_response(jsonify({"move_url": move_url}), 200)
 
 
 @app.route("/api/v1/get/<move_token>", methods=["GET"])
@@ -115,12 +111,12 @@ def get_item(user, move_token):
             move_token, app.config["SECRET_KEY"], algorithms=["HS256"]
         )
     except:
-        return make_response(jsonify({"message": "token is invalid"}), 200)
+        return make_response(jsonify({"message": "Token is invalid"}), 200)
     item_id, new_username = move_token_data.get("item_id"), move_token_data.get(
         "new_username"
     )
     if not user.username == new_username:
-        return make_response(jsonify({"message": "another user token"}), 200)
+        return make_response(jsonify({"message": "Another user token"}), 200)
     item = Item.query.get(item_id)
     new_user = User.query.filter_by(username=new_username).one()
     item.user_id = new_user.id
@@ -166,7 +162,8 @@ def login_user():
     if user.verify_password(password):
         web_token = jwt.encode(
             {
-                "exp": datetime.utcnow() + timedelta(days=2),
+                "exp": datetime.utcnow()
+                + timedelta(seconds=app.config["WEB_TOKEN_PERIOD_EXPIRE_SECONDS"]),
                 "username": user.username,
             },
             app.config["SECRET_KEY"],
