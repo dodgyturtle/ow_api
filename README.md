@@ -1,3 +1,4 @@
+[![Build Status](https://app.travis-ci.com/dumbturtle/ow_api.svg?branch=master)](https://app.travis-ci.com/dumbturtle/ow_api)
 # Test task OW
 ## Run it
 Install requirements: 
