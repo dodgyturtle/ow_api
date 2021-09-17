@@ -1,9 +1,9 @@
 from datetime import datetime, timedelta
 from functools import wraps
-from os import error
+from os import EX_CANTCREAT, error
 
 import jwt
-from flask import jsonify, make_response, request, url_for
+from flask import abort, jsonify, make_response, request, url_for
 from marshmallow import ValidationError
 
 from .models import Item, User
@@ -128,7 +128,10 @@ def get_item(user, move_token):
 @app.route("/api/v1/user/registration", methods=["POST"])
 def create_user():
     user_schema = UserSchema()
-    json_data = request.get_json()
+    try:
+        json_data = request.get_json()
+    except Exception as err:
+        return make_response(jsonify({"message": f"{ err }"}), 400)
     if not json_data:
         return make_response(jsonify({"message": "No input data provided"}), 200)
     try:
@@ -138,7 +141,7 @@ def create_user():
     username, password = data["username"], data["password"]
     user = User.query.filter_by(username=username).first()
     if user:
-        return make_response(jsonify({"message": "User already exist"}), 400)
+        return make_response(jsonify({"message": "User already exist"}), 422)
     user = User(username=username, password=password)
     user.create()
     result = user_schema.dump(User.query.get(user.id))

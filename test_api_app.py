@@ -81,28 +81,49 @@ def login_destination_user(request):
 
 @pytest.mark.usefixtures("configure_app", "create_db")
 class TestUser:
-    def test_create_user(self):
+    @pytest.mark.parametrize(
+        "user_json, expected_status_code, expected_data",
+        [
+            (
+                json.dumps({"username": "test_user", "password": "123123"}),
+                200,
+                {"user": {"id": 1, "items": [], "username": "test_user"}},
+            ),
+            (
+                json.dumps({"username": "test_user", "password": "123123"}),
+                422,
+                {"message": "User already exist"},
+            ),
+            (
+                json.dumps({"username": "", "password": "123123"}),
+                422,
+                {"message": "{'username': ['Data not provided.']}"},
+            ),
+            (
+                json.dumps({"username": "test_user", "password": ""}),
+                422,
+                {"message": "{'password': ['Data not provided.']}"},
+            ),
+            (
+                str({"username" "test_user"}),
+                400,
+                {
+                    "message": "400 Bad Request: The browser (or proxy) sent a request that this server could not understand."
+                },
+            ),
+        ],
+    )
+    def test_create_user(self, user_json, expected_status_code, expected_data):
         response = app.test_client().post(
             "api/v1/user/registration",
-            data=json.dumps({"username": "test_user", "password": "123123"}),
+            data=user_json,
             content_type="application/json",
         )
 
         response_data = response.get_json()
 
-        assert response.status_code == 200
-        assert response_data["user"] == {"id": 1, "items": [], "username": "test_user"}
-
-    def test_create_user_failure(self):
-        response = app.test_client().post(
-            "api/v1/user/registration",
-            data=json.dumps({"username": "test_user", "password": "123123"}),
-            content_type="application/json",
-        )
-
-        response_data = response.get_json()
-        assert response.status_code == 400
-        assert response_data["message"] == "User already exist"
+        assert response.status_code == expected_status_code
+        assert response_data == expected_data
 
     @pytest.mark.usefixtures("reduce_period_expire")
     def test_login_user(self, request):
