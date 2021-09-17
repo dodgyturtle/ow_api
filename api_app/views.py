@@ -32,6 +32,23 @@ def token_required(f):
     return decorator
 
 
+@app.errorhandler(500)
+def internal_server_error(e):
+    return make_response(jsonify({"message": "Internal Server Error"}), 500)
+
+
+@app.errorhandler(400)
+def internal_server_error(e):
+    return make_response(
+        jsonify(
+            {
+                "message": "400 Bad Request: The browser (or proxy) sent a request that this server could not understand."
+            }
+        ),
+        400,
+    )
+
+
 @app.route("/api/v1/items", methods=["GET"])
 @token_required
 def index(user):
@@ -153,24 +170,23 @@ def login_user():
     user_schema = UserSchema()
     json_data = request.get_json()
     if not json_data:
-        return make_response(jsonify({"user": "No input data provided"}), 200)
+        return make_response(jsonify({"message": "No input data provided"}), 200)
     try:
         data = user_schema.load(json_data)
     except ValidationError as err:
-        return make_response(jsonify({"user": f"{ err.messages }"}), 422)
+        return make_response(jsonify({"message": f"{ err.messages }"}), 422)
     username, password = data["username"], data["password"]
-    user = User.query.filter_by(username=username).one()
+    user = User.query.filter_by(username=username).first()
     if not user:
-        return make_response(jsonify({"user": "User is not exist"}), 400)
+        return make_response(jsonify({"message": "User is not exist"}), 422)
     if user.verify_password(password):
         web_token = jwt.encode(
             {
-                "exp": datetime.utcnow() + timedelta(
-                    seconds=app.config["WEB_TOKEN_PERIOD_EXPIRE_SECONDS"]
-                ),
+                "exp": datetime.utcnow()
+                + timedelta(seconds=app.config["WEB_TOKEN_PERIOD_EXPIRE_SECONDS"]),
                 "username": user.username,
             },
             app.config["SECRET_KEY"],
         )
         return make_response(jsonify({"user": {"web_token": web_token}}), 200)
-    return make_response(jsonify({"user": "Wrong password!"}), 200)
+    return make_response(jsonify({"message": "Wrong password!"}), 403)

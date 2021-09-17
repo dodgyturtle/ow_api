@@ -125,18 +125,61 @@ class TestUser:
         assert response.status_code == expected_status_code
         assert response_data == expected_data
 
+    @pytest.mark.parametrize(
+        "user_json, expected_status_code, expected_data",
+        [
+            (
+                json.dumps({"username": "test_user", "password": "123123"}),
+                200,
+                "test_user",
+            ),
+            (
+                json.dumps({"username": "fail_user", "password": "123123"}),
+                422,
+                {"message": "User is not exist"},
+            ),
+            (
+                json.dumps({"username": "", "password": "123123"}),
+                422,
+                {"message": "{'username': ['Data not provided.']}"},
+            ),
+            (
+                json.dumps({"username": "test_user", "password": ""}),
+                422,
+                {"message": "{'password': ['Data not provided.']}"},
+            ),
+            (
+                str({"username" "test_user"}),
+                400,
+                {
+                    "message": "400 Bad Request: The browser (or proxy) sent a request that this server could not understand."
+                },
+            ),
+            (
+                json.dumps({"username": "test_user", "password": "1231231"}),
+                403,
+                {"message": "Wrong password!"},
+            ),
+        ],
+    )
     @pytest.mark.usefixtures("reduce_period_expire")
-    def test_login_user(self, request):
+    def test_login_user(self, request, user_json, expected_status_code, expected_data):
         response = app.test_client().post(
             "api/v1/user/login",
-            data=json.dumps({"username": "test_user", "password": "123123"}),
+            data=user_json,
             content_type="application/json",
         )
-
         response_data = response.get_json()
-        request.config.cache.set("web_token", response_data["user"]["web_token"])
-        assert "web_token" in response_data["user"]
-        assert response.status_code == 200
+        if "user" in response_data:
+            web_token = response_data["user"]["web_token"]
+            request.config.cache.set("web_token", web_token)
+            decode_web_token = jwt.decode(
+                web_token, app.config["SECRET_KEY"], algorithms=["HS256"]
+            )
+            assert decode_web_token["username"] == expected_data
+        if "message" in response_data:
+            assert response_data == expected_data
+        assert response.status_code == expected_status_code
 
     def test_web_token_success(self, request):
         web_token = request.config.cache.get("web_token", None)
