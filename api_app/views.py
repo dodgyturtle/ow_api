@@ -1,9 +1,9 @@
 from datetime import datetime, timedelta
 from functools import wraps
-from os import EX_CANTCREAT, error
+from typing import Any, Callable
 
 import jwt
-from flask import abort, jsonify, make_response, request, url_for
+from flask import jsonify, make_response, request, url_for, wrappers
 from marshmallow import ValidationError
 
 from . import app, db
@@ -11,9 +11,9 @@ from .models import Item, User
 from .schemes import ItemSchema, NewUserSchema, UserSchema
 
 
-def token_required(f):
-    @wraps(f)
-    def decorator(*args, **kwargs):
+def token_required(function: Any) -> Any:
+    @wraps(function)
+    def decorator(*args: Any, **kwargs: Any) -> Callable:
         token = None
         if "x-access-tokens" in request.headers:
             token = request.headers["x-access-tokens"]
@@ -30,7 +30,7 @@ def token_required(f):
             return make_response(
                 jsonify({"message": "Тoken does not belong to any user"}), 403
             )
-        return f(current_user, *args, **kwargs)
+        return function(current_user, *args, **kwargs)
 
     return decorator
 
@@ -41,12 +41,12 @@ def internal_server_error(e):
 
 
 @app.errorhandler(404)
-def internal_server_error(e):
+def send_url_not_found(e):
     return make_response(jsonify({"message": "URL not Found"}), 404)
 
 
 @app.errorhandler(400)
-def internal_server_error(e):
+def send_bad_request(e):
     return make_response(
         jsonify(
             {
@@ -59,7 +59,7 @@ def internal_server_error(e):
 
 @app.route("/api/v1/items", methods=["GET"])
 @token_required
-def index(user):
+def index(user: User) -> wrappers.Response:
     raw_items = Item.query.filter_by(user_id=user.id).all()
     item_schema = ItemSchema(many=True)
     items = item_schema.dump(raw_items)
@@ -68,7 +68,7 @@ def index(user):
 
 @app.route("/api/v1/items/new", methods=["POST"])
 @token_required
-def create_item(user):
+def create_item(user: User) -> wrappers.Response:
     item_schema = ItemSchema()
     json_data = request.get_json()
     try:
@@ -84,7 +84,7 @@ def create_item(user):
 
 @app.route("/api/v1/items/<id>", methods=["DELETE"])
 @token_required
-def delete_item(user, id):
+def delete_item(user: User, id: int) -> wrappers.Response:
     item = Item.query.get(id)
     if not item:
         return make_response(jsonify({"message": "No item with such id"}), 422)
@@ -100,7 +100,7 @@ def delete_item(user, id):
 
 @app.route("/api/v1/send", methods=["POST"])
 @token_required
-def send_item(user):
+def send_item(user: User) -> wrappers.Response:
     json_data = request.get_json()
     new_user_schema = NewUserSchema()
     try:
@@ -137,7 +137,7 @@ def send_item(user):
 
 @app.route("/api/v1/get/<move_token>", methods=["GET"])
 @token_required
-def get_item(user, move_token):
+def get_item(user: User, move_token: str) -> wrappers.Response:
     item_schema = ItemSchema()
     try:
         move_token_data = jwt.decode(
@@ -168,7 +168,7 @@ def get_item(user, move_token):
 
 
 @app.route("/api/v1/user/registration", methods=["POST"])
-def create_user():
+def create_user() -> wrappers.Response:
     user_schema = UserSchema()
     json_data = request.get_json()
     try:
@@ -186,7 +186,7 @@ def create_user():
 
 
 @app.route("/api/v1/user/login", methods=["POST"])
-def login_user():
+def login_user() -> wrappers.Response:
     user_schema = UserSchema()
     json_data = request.get_json()
     try:
