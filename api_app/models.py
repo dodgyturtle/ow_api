@@ -20,9 +20,6 @@ class User(db.Model):
         self.username = username
         self.password = bcrypt.generate_password_hash(password)
 
-    def __repr__(self):
-        return f"{self.username}"
-
 
 class Item(db.Model):
     __tablename__ = "items"
@@ -34,6 +31,3 @@ class Item(db.Model):
         db.session.add(self)
         db.session.commit()
         return self
-
-    def __repr__(self):
-        return f"{self.name}"
