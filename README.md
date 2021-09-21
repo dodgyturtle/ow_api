@@ -12,5 +12,8 @@ Create DB:
 `$python create_db.py`
 
 Run app: 
-`$FLASK_APP=api_app/__init__.py  FLASK_DEBUG=1 flask run`
+`$python wsgi.py`
 
+## Run test
+Run tests:
+`$python -m pytest --cov-report term --cov=api_app`
