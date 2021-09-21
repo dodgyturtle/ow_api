@@ -11,9 +11,7 @@ AUTH_TOKEN_PERIOD_EXPIRE_SECONDS = 86400
 DEBUG = env.bool("DEBUG", True)
 if DEBUG:
     SQLALCHEMY_DATABASE_URI = "sqlite:///" + os.path.join(basedir, "test.db")
-else: 
-    SQLALCHEMY_DATABASE_URI = 'mysql://root:1231231@localhost/db'
+else:
+    SQLALCHEMY_DATABASE_URI = "mysql://username:password@localhost/db"
 # SQLALCHEMY_DATABASE_URI = 'postgresql://scott:tiger@localhost:5432/myapp'
-# SQLALCHEMY_ECHO = True
-# SQLALCHEMY_POOL_RECYCLE = 3
 SQLALCHEMY_TRACK_MODIFICATIONS = True
