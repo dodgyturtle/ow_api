@@ -8,6 +8,7 @@ from api_app import app, db
 from flask import json, url_for
 
 
+
 def create_auth_token(username):
     auth_token = jwt.encode(
         {
@@ -99,10 +100,10 @@ def set_token(request):
     request.config.cache.set("no_user_auth_token", create_auth_token("no_user"))
     with app.app_context():
         no_item_move_url = url_for(
-            "get_item", move_token=create_web_token("test_user", 100), _external=False
+            "api.get_item", move_token=create_web_token("test_user", 100), _external=False
         )
         error_token_move_url = url_for(
-            "get_item", move_token="dfvdvdfvdvfvdfd", _external=False
+            "api.get_item", move_token="dfvdvdfvdvfvdfd", _external=False
         )
         request.config.cache.set("error_token_move_url", error_token_move_url)
         request.config.cache.set("no_item_move_url", no_item_move_url)

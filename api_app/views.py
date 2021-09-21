@@ -3,12 +3,14 @@ from functools import wraps
 from typing import Any, Callable
 
 import jwt
-from flask import jsonify, make_response, request, url_for, wrappers
+from flask import Blueprint, jsonify, make_response, request, url_for, wrappers
 from marshmallow import ValidationError
 
 from . import app, db
 from .models import Item, User
 from .schemes import ItemSchema, NewUserSchema, UserSchema
+
+api_blueprint = Blueprint("api", __name__)
 
 
 def token_required(function: Any) -> Any:
@@ -35,17 +37,17 @@ def token_required(function: Any) -> Any:
     return decorator
 
 
-@app.errorhandler(500)
+@api_blueprint.app_errorhandler(500)
 def internal_server_error(e):
     return make_response(jsonify({"message": "Internal Server Error"}), 500)
 
 
-@app.errorhandler(404)
+@api_blueprint.app_errorhandler(404)
 def send_url_not_found(e):
     return make_response(jsonify({"message": "URL not Found"}), 404)
 
 
-@app.errorhandler(400)
+@api_blueprint.app_errorhandler(400)
 def send_bad_request(e):
     return make_response(
         jsonify(
@@ -57,7 +59,7 @@ def send_bad_request(e):
     )
 
 
-@app.route("/api/v1/items", methods=["GET"])
+@api_blueprint.route("/api/v1/items", methods=["GET"])
 @token_required
 def index(user: User) -> wrappers.Response:
     raw_items = Item.query.filter_by(user_id=user.id).all()
@@ -66,7 +68,7 @@ def index(user: User) -> wrappers.Response:
     return make_response(jsonify({"items": items}))
 
 
-@app.route("/api/v1/items/new", methods=["POST"])
+@api_blueprint.route("/api/v1/items/new", methods=["POST"])
 @token_required
 def create_item(user: User) -> wrappers.Response:
     item_schema = ItemSchema()
@@ -82,7 +84,7 @@ def create_item(user: User) -> wrappers.Response:
     return make_response(jsonify({"item": result}), 200)
 
 
-@app.route("/api/v1/items/<id>", methods=["DELETE"])
+@api_blueprint.route("/api/v1/items/<id>", methods=["DELETE"])
 @token_required
 def delete_item(user: User, id: int) -> wrappers.Response:
     item = Item.query.get(id)
@@ -98,7 +100,7 @@ def delete_item(user: User, id: int) -> wrappers.Response:
     return make_response(jsonify({"item": f"Item: { item.name } deleted"}), 200)
 
 
-@app.route("/api/v1/send", methods=["POST"])
+@api_blueprint.route("/api/v1/send", methods=["POST"])
 @token_required
 def send_item(user: User) -> wrappers.Response:
     json_data = request.get_json()
@@ -131,11 +133,11 @@ def send_item(user: User) -> wrappers.Response:
         },
         app.config["SECRET_KEY"],
     )
-    move_url = url_for("get_item", move_token=move_token, _external=True)
+    move_url = url_for(".get_item", move_token=move_token, _external=True)
     return make_response(jsonify({"move_url": move_url}), 200)
 
 
-@app.route("/api/v1/get/<move_token>", methods=["GET"])
+@api_blueprint.route("/api/v1/get/<move_token>", methods=["GET"])
 @token_required
 def get_item(user: User, move_token: str) -> wrappers.Response:
     item_schema = ItemSchema()
@@ -167,7 +169,7 @@ def get_item(user: User, move_token: str) -> wrappers.Response:
     return make_response(jsonify({"user": result}), 200)
 
 
-@app.route("/api/v1/user/registration", methods=["POST"])
+@api_blueprint.route("/api/v1/user/registration", methods=["POST"])
 def create_user() -> wrappers.Response:
     user_schema = UserSchema()
     json_data = request.get_json()
@@ -185,7 +187,7 @@ def create_user() -> wrappers.Response:
     return make_response(jsonify({"user": result}), 200)
 
 
-@app.route("/api/v1/user/login", methods=["POST"])
+@api_blueprint.route("/api/v1/user/login", methods=["POST"])
 def login_user() -> wrappers.Response:
     user_schema = UserSchema()
     json_data = request.get_json()
