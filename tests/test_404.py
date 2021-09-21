@@ -1,9 +1,6 @@
-import os
-import tempfile
+from api_app import create_app
 
-import pytest
-from api_app import app
-
+app = create_app()
 
 class TestInaccessible:
     def test_404(self):

@@ -3,10 +3,9 @@ from functools import wraps
 from typing import Any, Callable
 
 import jwt
-from flask import Blueprint, jsonify, make_response, request, url_for, wrappers
+from flask import Blueprint, jsonify, make_response, request, url_for, wrappers, current_app
 from marshmallow import ValidationError
-
-from . import app, db
+from . import db
 from .models import Item, User
 from .schemes import ItemSchema, NewUserSchema, UserSchema
 
@@ -24,7 +23,7 @@ def token_required(function: Any) -> Any:
             return make_response(jsonify({"message": "Token is missing"}), 403)
 
         try:
-            data = jwt.decode(token, app.config["SECRET_KEY"], algorithms=["HS256"])
+            data = jwt.decode(token, current_app.config["SECRET_KEY"], algorithms=["HS256"])
             current_user = User.query.filter_by(username=data.get("username")).first()
         except jwt.exceptions.InvalidTokenError:
             return make_response(jsonify({"message": "Token is invalid"}), 403)
@@ -131,7 +130,7 @@ def send_item(user: User) -> wrappers.Response:
             "item_id": item_id,
             "new_username": new_username,
         },
-        app.config["SECRET_KEY"],
+        current_app.config["SECRET_KEY"],
     )
     move_url = url_for(".get_item", move_token=move_token, _external=True)
     return make_response(jsonify({"move_url": move_url}), 200)
@@ -143,7 +142,7 @@ def get_item(user: User, move_token: str) -> wrappers.Response:
     item_schema = ItemSchema()
     try:
         move_token_data = jwt.decode(
-            move_token, app.config["SECRET_KEY"], algorithms=["HS256"]
+            move_token, current_app.config["SECRET_KEY"], algorithms=["HS256"]
         )
     except jwt.exceptions.InvalidTokenError:
         return make_response(jsonify({"message": "Token in url is invalid"}), 422)
@@ -203,10 +202,10 @@ def login_user() -> wrappers.Response:
         auth_token = jwt.encode(
             {
                 "exp": datetime.utcnow()
-                + timedelta(seconds=app.config["AUTH_TOKEN_PERIOD_EXPIRE_SECONDS"]),
+                + timedelta(seconds=current_app.config["AUTH_TOKEN_PERIOD_EXPIRE_SECONDS"]),
                 "username": user.username,
             },
-            app.config["SECRET_KEY"],
+            current_app.config["SECRET_KEY"],
         )
         return make_response(jsonify({"user": {"auth_token": auth_token}}), 200)
     return make_response(jsonify({"message": "Wrong password!"}), 403)

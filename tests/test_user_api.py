@@ -4,9 +4,10 @@ import time
 
 import jwt
 import pytest
-from api_app import app, db
+from api_app import create_app, db
 from flask import json
 
+app = create_app()
 
 @pytest.fixture(scope="class")
 def configure_app():
@@ -21,7 +22,8 @@ def configure_app():
 
 @pytest.fixture(scope="class")
 def create_db():
-    db.create_all()
+    with app.app_context():
+        db.create_all()
 
 
 @pytest.fixture()

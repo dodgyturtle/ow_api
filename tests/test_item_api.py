@@ -4,9 +4,10 @@ from datetime import datetime, timedelta
 
 import jwt
 import pytest
-from api_app import app, db
+from api_app import create_app, db
 from flask import json, url_for
 
+app = create_app()
 
 
 def create_auth_token(username):
@@ -46,7 +47,8 @@ def configure_app():
 
 @pytest.fixture(scope="class")
 def create_db():
-    db.create_all()
+    with app.app_context():
+        db.create_all()
 
 
 @pytest.fixture(scope="class")
@@ -100,7 +102,9 @@ def set_token(request):
     request.config.cache.set("no_user_auth_token", create_auth_token("no_user"))
     with app.app_context():
         no_item_move_url = url_for(
-            "api.get_item", move_token=create_web_token("test_user", 100), _external=False
+            "api.get_item",
+            move_token=create_web_token("test_user", 100),
+            _external=False,
         )
         error_token_move_url = url_for(
             "api.get_item", move_token="dfvdvdfvdvfvdfd", _external=False
