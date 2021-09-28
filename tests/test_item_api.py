@@ -149,7 +149,7 @@ class TestItem:
                 "x-access-tokens",
                 "auth_token",
                 422,
-                {"message": "{'name': ['Data not provided.']}"},
+                {"message": "{'name': ['Shorter than minimum length 5.']}"},
             ),
             (
                 str({"name" "Item for test_user"}),
@@ -321,7 +321,7 @@ class TestItem:
                 "x-access-tokens",
                 "auth_token",
                 422,
-                {"message": "{'new_username': ['Data not provided.']}"},
+                {"message": "{'new_username': ['Shorter than minimum length 5.']}"},
             ),
             (
                 json.dumps({"new_username": "d_test_user", "item_id": ""}),
@@ -329,6 +329,13 @@ class TestItem:
                 "auth_token",
                 422,
                 {"message": "{'item_id': ['Not a valid integer.']}"},
+            ),
+            (
+                json.dumps({"new_username": "d_test_user", "item_id": "0"}),
+                "x-access-tokens",
+                "auth_token",
+                422,
+                {"message": "{'item_id': ['Must be greater than or equal to 1.']}"},
             ),
             (
                 json.dumps({"new_username": "d_test_user", "item_id": 1}),

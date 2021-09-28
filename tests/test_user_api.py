@@ -56,12 +56,12 @@ class TestUser:
             (
                 json.dumps({"username": "", "password": "123123"}),
                 422,
-                {"message": "{'username': ['Data not provided.']}"},
+                {"message": "{'username': ['Shorter than minimum length 5.']}"},
             ),
             (
                 json.dumps({"username": "test_user", "password": ""}),
                 422,
-                {"message": "{'password': ['Data not provided.']}"},
+                {"message": "{'password': ['Shorter than minimum length 6.']}"},
             ),
             (
                 str({"username" "test_user"}),
@@ -100,12 +100,12 @@ class TestUser:
             (
                 json.dumps({"username": "", "password": "123123"}),
                 422,
-                {"message": "{'username': ['Data not provided.']}"},
+                {"message": "{'username': ['Shorter than minimum length 5.']}"},
             ),
             (
                 json.dumps({"username": "test_user", "password": ""}),
                 422,
-                {"message": "{'password': ['Data not provided.']}"},
+                {"message": "{'password': ['Shorter than minimum length 6.']}"},
             ),
             (
                 str({"username" "test_user"}),
